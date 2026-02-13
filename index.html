@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuxeRide - Premium Ride Booking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/>
+                        <circle cx="17" cy="17" r="2"/>
+                    </svg>
+                </div>
+                <span>LuxeRide</span>
+            </a>
+            
+            <ul class="nav-links" id="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="booking.html">Book Ride</a></li>
+                <li><a href="trips.html">My Trips</a></li>
+                <li class="auth-buttons" id="auth-buttons">
+                    <a href="login.html" class="btn-secondary">Sign In</a>
+                    <a href="login.html?signup=true" class="btn-primary">Sign Up</a>
+                </li>
+                <li class="user-menu hidden" id="user-menu">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div class="dropdown" id="user-dropdown">
+                        <span id="user-name">User</span>
+                        <a href="trips.html">My Trips</a>
+                        <a href="#" onclick="Auth.logout()">Logout</a>
+                    </div>
+                </li>
+            </ul>
+            
+            <button class="mobile-menu-btn" id="mobile-menu-btn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg">
+            <img src="https://images.unsplash.com/photo-1563720223185-11003d516935?w=1920&q=80" alt="Luxury Taxi NYC" id="hero-image">
+            <div class="hero-overlay"></div>
+            <div class="hero-spotlight"></div>
+        </div>
+        
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="pulse"></span>
+                Premium Service Live
+            </div>
+            <h1>Your <span class="gradient-text">Ultimate</span><br>Luxury Drive Awaits</h1>
+            <p class="hero-subtitle">Experience the epitome of urban luxury. Professional chauffeurs, pristine vehicles, and seamless journeys through the city's vibrant streets.</p>
+            
+            <div class="search-widget">
+                <div class="search-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <span>Where are you going today?</span>
+                </div>
+                
+                <div class="search-inputs">
+                    <div class="input-group">
+                        <div class="input-icon pickup">
+                            <div class="dot green"></div>
+                        </div>
+                        <input type="text" id="home-pickup" placeholder="Enter pickup location" autocomplete="off">
+                        <button class="locate-btn" onclick="getCurrentLocation()" title="Use current location">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="input-divider"></div>
+                    
+                    <div class="input-group">
+                        <div class="input-icon dropoff">
+                            <div class="dot red"></div>
+                        </div>
+                        <input type="text" id="home-drop" placeholder="Enter destination" autocomplete="off">
+                    </div>
+                    
+                    <div class="input-group datetime">
+                        <div class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <input type="datetime-local" id="home-date">
+                    </div>
+                </div>
+                
+                <button class="search-btn" onclick="searchRides()">
+                    <span>Search Rides</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="popular-locations">
+                <span>Popular:</span>
+                <button class="location-chip" onclick="setLocation('JFK Airport', 'home')">
+                    <span>✈️</span> JFK Airport
+                </button>
+                <button class="location-chip" onclick="setLocation('Times Square', 'home')">
+                    <span>🎭</span> Times Square
+                </button>
+                <button class="location-chip" onclick="setLocation('Central Park', 'home')">
+                    <span>🌳</span> Central Park
+                </button>
+                <button class="location-chip" onclick="setLocation('Wall Street', 'home')">
+                    <span>🏢</span> Wall Street
+                </button>
+            </div>
+        </div>
+        
+        <div class="scroll-indicator">
+            <div class="mouse">
+                <div class="wheel"></div>
+            </div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Why Choose Us</span>
+                <h2>The LuxeRide Difference</h2>
+                <p>Elevating your journey with unparalleled service and attention to detail</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <h3>Premium Fleet</h3>
+                    <p>Luxury sedans, SUVs, and eco-friendly options meticulously maintained for your comfort.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon gold">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <h3>Professional Chauffeurs</h3>
+                    <p>Trained, verified, and courteous drivers committed to your safety and satisfaction.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                    <h3>Safety First</h3>
+                    <p>24/7 support, real-time tracking, and emergency SOS features for peace of mind.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Instant Booking</h3>
+                    <p>Seamless reservations with live availability and transparent upfront pricing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item" data-count="150">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Luxury Vehicles</div>
+                </div>
+                <div class="stat-item" data-count="50000">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Happy Riders</div>
+                </div>
+                <div class="stat-item" data-count="99">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">% Safety Score</div>
+                </div>
+                <div class="stat-item" data-count="4">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">.9 App Rating</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vehicle Showcase -->
+    <section class="vehicles-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Our Fleet</span>
+                <h2>Choose Your Style</h2>
+                <p>From eco-friendly bikes to luxurious sedans, find your perfect ride</p>
+            </div>
+            
+            <div class="vehicles-showcase" id="vehicles-preview">
+                <!-- Injected by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to Experience Luxury?</h2>
+            <p>Join thousands of satisfied riders who've made LuxeRide their preferred choice.</p>
+            <div class="cta-buttons">
+                <a href="booking.html" class="btn-primary btn-large">Book Your First Ride</a>
+                <a href="login.html" class="btn-secondary btn-large">Create Account</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                                <circle cx="7" cy="17" r="2"/>
+                                <circle cx="17" cy="17" r="2"/>
+                            </svg>
+                        </div>
+                        <span>LuxeRide</span>
+                    </div>
+                    <p>Redefining urban mobility with luxury, safety, and sustainability at its core.</p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" aria-label="Instagram">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                            </svg>
+                        </a>
+                        <a href="#" aria-label="LinkedIn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                                <rect x="2" y="9" width="4" height="12"></rect>
+                                <circle cx="4" cy="4" r="2"></circle>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press</a></li>
+                        <li><a href="#">Blog</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="booking.html">Book a Ride</a></li>
+                        <li><a href="#">Business</a></li>
+                        <li><a href="#">Airport Transfer</a></li>
+                        <li><a href="#">City Tours</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Safety</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 LuxeRide. All rights reserved.</p>
+                <div class="app-badges">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" height="40">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Play Store" height="40">
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Trips - LuxeRide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <style>
+        .trips-page {
+            padding-top: 80px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--dark-bg) 0%, var(--dark-card) 100%);
+        }
+
+        .trips-header {
+            background: var(--dark-elevated);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .trips-header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .trips-title h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .trips-title p {
+            color: var(--text-secondary);
+        }
+
+        .trip-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+            border-color: var(--primary-gold);
+        }
+
+        .trips-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .trip-card {
+            background: var(--dark-elevated);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 1.5rem;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .trip-card:hover {
+            border-color: rgba(212, 175, 55, 0.3);
+            transform: translateX(5px);
+        }
+
+        .trip-status {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .status-ongoing {
+            background: rgba(255, 214, 0, 0.1);
+            color: var(--accent-yellow);
+            animation: pulse 2s infinite;
+        }
+
+        .status-completed {
+            background: rgba(0, 200, 83, 0.1);
+            color: var(--success-green);
+        }
+
+        .status-cancelled {
+            background: rgba(255, 68, 68, 0.1);
+            color: var(--danger-red);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .trip-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .trip-route {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .trip-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .trip-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .trip-price {
+            text-align: right;
+        }
+
+        .price-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-gold);
+        }
+
+        .trip-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+            border-color: var(--primary-gold);
+        }
+
+        .icon-btn.danger:hover {
+            background: var(--danger-red);
+            border-color: var(--danger-red);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3rem;
+        }
+
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .trip-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .trip-route {
+                justify-content: center;
+            }
+
+            .trip-meta {
+                justify-content: center;
+            }
+
+            .trip-price {
+                text-align: center;
+            }
+
+            .trip-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar compact" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/>
+                        <circle cx="17" cy="17" r="2"/>
+                    </svg>
+                </div>
+                <span>LuxeRide</span>
+            </a>
+            
+            <div class="nav-right">
+                <a href="booking.html" class="btn-primary">Book Ride</a>
+                <div class="user-menu" id="user-menu">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div class="dropdown">
+                        <span id="user-name">User</span>
+                        <a href="#" onclick="Auth.logout()">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="trips-page">
+        <div class="trips-header">
+            <div class="trips-header-content">
+                <div class="trips-title">
+                    <h1>My Trips</h1>
+                    <p>View and manage your ride history</p>
+                </div>
+                
+                <div class="trip-filters">
+                    <button class="filter-btn active" onclick="filterTrips('all')">All</button>
+                    <button class="filter-btn" onclick="filterTrips('ongoing')">Ongoing</button>
+                    <button class="filter-btn" onclick="filterTrips('completed')">Completed</button>
+                    <button class="filter-btn" onclick="filterTrips('cancelled')">Cancelled</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="trips-container" id="trips-container">
+            <!-- Trips injected here -->
+        </div>
+    </main>
+
+    <!-- SOS Button -->
+    <button class="sos-button" onclick="triggerSOS()" title="Emergency SOS">
+        <span>SOS</span>
+    </button>
+
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/rideManager.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        let currentFilter = 'all';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.checkAuth();
+            loadTrips();
+        });
+
+        function loadTrips() {
+            const container = document.getElementById('trips-container');
+            const trips = RideManager.getRides();
+            
+            const filtered = currentFilter === 'all' 
+                ? trips 
+                : trips.filter(t => t.status === currentFilter);
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🚗</div>
+                        <h3>No trips found</h3>
+                        <p>${currentFilter === 'all' ? 'Book your first ride to see it here' : `No ${currentFilter} trips`}</p>
+                        <a href="booking.html" class="btn-primary">Book a Ride</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filtered.map(trip => createTripCard(trip)).join('');
+        }
+
+        function createTripCard(trip) {
+            const statusIcons = {
+                ongoing: '→',
+                completed: '✓',
+                cancelled: '✕'
+            };
+            
+            const date = new Date(trip.createdAt);
+            const dateStr = date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            return `
+                <div class="trip-card">
+                    <div class="trip-status status-${trip.status}">
+                        ${statusIcons[trip.status]}
+                    </div>
+                    
+                    <div class="trip-info">
+                        <h3>
+                            ${trip.vehicle.icon} ${trip.vehicle.name}
+                            ${trip.preferences.femaleDriver ? '👩' : ''}
+                            ${trip.preferences.petFriendly ? '🐾' : ''}
+                        </h3>
+                        <div class="trip-route">
+                            <span>${trip.pickup}</span>
+                            <span>→</span>
+                            <span>${trip.dropoff}</span>
+                        </div>
+                        <div class="trip-meta">
+                            <span>📅 ${dateStr}</span>
+                            <span>🎫 OTP: <strong style="color: var(--primary-gold)">${trip.otp}</strong></span>
+                            ${trip.distance ? `<span>📏 ${trip.distance.toFixed(1)} km</span>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="trip-price">
+                        <div class="price-amount">₹${trip.fare}</div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary);">${trip.status}</div>
+                    </div>
+                    
+                    <div class="trip-actions">
+                        ${trip.status === 'ongoing' ? `
+                            <button class="icon-btn danger" onclick="cancelTrip(${trip.id})" title="Cancel Ride">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        <button class="icon-btn" onclick="deleteTrip(${trip.id})" title="Delete">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterTrips(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            loadTrips();
+        }
+
+        function cancelTrip(id) {
+            if (confirm('Are you sure you want to cancel this ride?')) {
+                RideManager.cancelRide(id);
+                showToast('Ride cancelled successfully', 'success');
+                loadTrips();
+            }
+        }
+
+        function deleteTrip(id) {
+            if (confirm('Delete this trip from history?')) {
+                RideManager.deleteRide(id);
+                showToast('Trip deleted', 'success');
+                loadTrips();
+            }
+        }
+
+        function triggerSOS() {
+            if (confirm('🚨 EMERGENCY: Send SOS alert?')) {
+                showToast('🚨 SOS sent to emergency contacts!', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

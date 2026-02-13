@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Ride - LuxeRide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/booking.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body class="booking-page">
+    <!-- Navigation -->
+    <nav class="navbar compact" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/>
+                        <circle cx="17" cy="17" r="2"/>
+                    </svg>
+                </div>
+                <span>LuxeRide</span>
+            </a>
+            
+            <div class="nav-right">
+                <a href="trips.html" class="nav-link">My Trips</a>
+                <div class="user-menu" id="user-menu">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div class="dropdown" id="user-dropdown">
+                        <span id="user-name">User</span>
+                        <a href="trips.html">My Trips</a>
+                        <a href="#" onclick="Auth.logout()">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Booking Interface -->
+    <main class="booking-interface">
+        <!-- Map Container -->
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <!-- Map Controls -->
+            <div class="map-controls">
+                <button class="map-control-btn" onclick="MapManager.locateUser()" title="My Location">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+                <button class="map-control-btn" onclick="MapManager.resetView()" title="Reset View">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Route Info Overlay -->
+            <div class="route-info" id="route-info" style="display: none;">
+                <div class="route-stat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M2 12h20"></path>
+                    </svg>
+                    <span id="route-distance">-- km</span>
+                </div>
+                <div class="route-stat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span id="route-duration">-- min</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Sidebar -->
+        <aside class="booking-sidebar">
+            <div class="sidebar-header">
+                <h2>Choose Your Ride</h2>
+                <p class="sidebar-subtitle">Select your preferred vehicle and options</p>
+                
+                <!-- Location Inputs -->
+                <div class="location-panel">
+                    <div class="location-input-group">
+                        <div class="location-line">
+                            <div class="location-dot green"></div>
+                            <div class="location-pulse"></div>
+                        </div>
+                        <div class="location-field">
+                            <label>Pickup</label>
+                            <input type="text" id="pickup-input" placeholder="Enter pickup location" autocomplete="off">
+                            <button class="locate-btn-sm" onclick="MapManager.locateUser()" title="Use current location">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="location-swap" onclick="MapManager.swapLocations()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <polyline points="19 12 12 19 5 12"></polyline>
+                        </svg>
+                    </div>
+                    
+                    <div class="location-input-group">
+                        <div class="location-line">
+                            <div class="location-dot red"></div>
+                        </div>
+                        <div class="location-field">
+                            <label>Dropoff</label>
+                            <input type="text" id="dropoff-input" placeholder="Enter destination" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="route-btn" id="route-btn" onclick="MapManager.calculateRoute()" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                    </svg>
+                    Show Route
+                </button>
+            </div>
+
+            <!-- Vehicle Selection -->
+            <div class="vehicles-panel" id="vehicles-panel">
+                <div class="panel-title">Select Vehicle</div>
+                <div class="vehicles-list" id="vehicles-list">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <!-- Eco Impact -->
+            <div class="eco-panel" id="eco-panel" style="display: none;">
+                <div class="eco-icon">🌱</div>
+                <div class="eco-content">
+                    <div class="eco-title">Eco-Friendly Choice!</div>
+                    <div class="eco-text">You'll save <strong id="eco-saved">2.5kg</strong> of CO₂ emissions</div>
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="preferences-panel">
+                <div class="panel-title">Ride Preferences</div>
+                <div class="preference-toggles">
+                    <label class="preference-item">
+                        <div class="preference-info">
+                            <span class="preference-icon">👩</span>
+                            <div>
+                                <div class="preference-label">Female Driver</div>
+                                <div class="preference-desc">Request a female driver</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="togglePreference(this, 'femaleDriver')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </label>
+                    
+                    <label class="preference-item">
+                        <div class="preference-info">
+                            <span class="preference-icon">🐾</span>
+                            <div>
+                                <div class="preference-label">Pet Friendly</div>
+                                <div class="preference-desc">Bring your furry friends</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="togglePreference(this, 'petFriendly')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </label>
+                    
+                    <label class="preference-item">
+                        <div class="preference-info">
+                            <span class="preference-icon">♿</span>
+                            <div>
+                                <div class="preference-label">Wheelchair Accessible</div>
+                                <div class="preference-desc">Vehicle with ramp/lift</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="togglePreference(this, 'wheelchair')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </label>
+                    
+                    <label class="preference-item">
+                        <div class="preference-info">
+                            <span class="preference-icon">🔇</span>
+                            <div>
+                                <div class="preference-label">Silent Ride</div>
+                                <div class="preference-desc">Minimal conversation</div>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" onclick="togglePreference(this, 'silent')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Promo Code -->
+            <div class="promo-panel">
+                <div class="panel-title">Promo Code</div>
+                <div class="promo-input-group">
+                    <input type="text" id="promo-input" placeholder="Enter code (Try: FIRST50)" maxlength="10">
+                    <button class="btn-secondary" onclick="applyPromo()">Apply</button>
+                </div>
+                <div class="promo-message" id="promo-message"></div>
+            </div>
+
+            <!-- Fare Summary -->
+            <div class="fare-panel">
+                <div class="fare-breakdown">
+                    <div class="fare-row">
+                        <span>Base fare</span>
+                        <span id="fare-base">₹0</span>
+                    </div>
+                    <div class="fare-row">
+                        <span>Distance</span>
+                        <span id="fare-distance">₹0</span>
+                    </div>
+                    <div class="fare-row">
+                        <span>Taxes & Fees</span>
+                        <span id="fare-taxes">₹0</span>
+                    </div>
+                    <div class="fare-row discount" id="fare-discount-row" style="display: none;">
+                        <span>Discount</span>
+                        <span id="fare-discount">-₹0</span>
+                    </div>
+                </div>
+                
+                <div class="fare-total">
+                    <div>
+                        <div class="fare-total-label">Total</div>
+                        <div class="fare-total-sub">Includes all taxes</div>
+                    </div>
+                    <div class="fare-total-amount" id="fare-total">₹0</div>
+                </div>
+                
+                <button class="btn-primary btn-book" id="book-btn" onclick="initiateBooking()" disabled>
+                    <span class="btn-text">Book Now</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- SOS Button -->
+    <button class="sos-button" onclick="triggerSOS()" title="Emergency SOS">
+        <span>SOS</span>
+    </button>
+
+    <!-- Booking Confirmation Modal -->
+    <div class="modal-overlay" id="booking-modal">
+        <div class="modal booking-confirm">
+            <div class="modal-header">
+                <div class="success-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <h3>Confirm Booking</h3>
+                <p>Please review your ride details before confirming</p>
+            </div>
+            
+            <div class="booking-summary">
+                <div class="summary-row">
+                    <span>Vehicle</span>
+                    <strong id="confirm-vehicle">--</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Pickup</span>
+                    <strong id="confirm-pickup">--</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Destination</span>
+                    <strong id="confirm-dropoff">--</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Estimated fare</span>
+                    <strong id="confirm-fare">--</strong>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="confirmBooking()">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/rideManager.js"></script>
+<script src="js/map.js"></script>
+<script src="js/ui.js"></script>
+<script>
+    // Booking State
+    const BookingState = {
+        pickup: null,
+        dropoff: null,
+        selectedVehicle: null,
+        distance: 0,
+        duration: 0,
+        baseFare: 0,
+        preferences: {
+            femaleDriver: false,
+            petFriendly: false,
+            wheelchair: false,
+            silent: false
+        },
+        promoApplied: false,
+        discount: 0
+    };
+
+    // Make it global for map.js access
+    window.BookingState = BookingState;
+
+    // Vehicle Data with proper pricing
+    const vehicles = [
+        { id: 'bike', name: 'Bike', icon: '🏍️', basePrice: 30, perKm: 8, eco: true, co2: '4.2kg', desc: 'Quick & budget-friendly' },
+        { id: 'cycle', name: 'Cycle', icon: '🚲', basePrice: 15, perKm: 5, eco: true, co2: '5.8kg', desc: 'Eco-friendly short rides' },
+        { id: 'auto', name: 'Auto', icon: '🛺', basePrice: 50, perKm: 12, eco: false, co2: '0kg', desc: 'Reliable city transport' },
+        { id: 'sedan', name: 'Sedan', icon: '🚗', basePrice: 100, perKm: 15, eco: false, co2: '0kg', desc: 'Comfort & privacy' },
+        { id: 'suv', name: 'SUV', icon: '🚙', basePrice: 150, perKm: 20, eco: false, co2: '0kg', desc: 'Spacious luxury' },
+        { id: 'luxury', name: 'Luxury', icon: '🏎️', basePrice: 300, perKm: 35, eco: false, co2: '0kg', desc: 'Premium experience' }
+    ];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        Auth.checkAuth();
+        MapManager.init();
+        renderVehicles();
+        setupInputs();
+        
+        // Check for URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const pickup = urlParams.get('pickup');
+        const dropoff = urlParams.get('dropoff');
+        
+        if (pickup) {
+            document.getElementById('pickup-input').value = pickup;
+            BookingState.pickup = pickup;
+        }
+        if (dropoff) {
+            document.getElementById('dropoff-input').value = dropoff;
+            BookingState.dropoff = dropoff;
+        }
+        
+        if (pickup && dropoff) {
+            setTimeout(() => MapManager.calculateRoute(), 500);
+        }
+    });
+
+    function setupInputs() {
+        const pickupInput = document.getElementById('pickup-input');
+        const dropoffInput = document.getElementById('dropoff-input');
+        
+        if (pickupInput) {
+            pickupInput.addEventListener('input', (e) => {
+                BookingState.pickup = e.target.value;
+            });
+        }
+        
+        if (dropoffInput) {
+            dropoffInput.addEventListener('input', (e) => {
+                BookingState.dropoff = e.target.value;
+            });
+        }
+    }
+
+    function renderVehicles() {
+        const list = document.getElementById('vehicles-list');
+        if (!list) return;
+        
+        list.innerHTML = vehicles.map(v => `
+            <div class="vehicle-card" onclick="selectVehicle('${v.id}')" id="vehicle-${v.id}">
+                <div class="vehicle-icon">${v.icon}</div>
+                <div class="vehicle-info">
+                    <div class="vehicle-name">${v.name}</div>
+                    <div class="vehicle-desc">${v.desc}</div>
+                    ${v.eco ? '<span class="eco-badge">🌱 Eco</span>' : ''}
+                </div>
+                <div class="vehicle-price">
+                    <div class="price-est" id="price-${v.id}">--</div>
+                    <div class="price-unit">est.</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Update all vehicle prices when distance is known
+    function updateAllVehiclePrices(distance) {
+        if (!distance || distance <= 0) return;
+        
+        vehicles.forEach(veh => {
+            const priceEl = document.getElementById(`price-${veh.id}`);
+            if (priceEl) {
+                const price = calculateVehiclePrice(veh, distance);
+                priceEl.textContent = `₹${price}`;
+                priceEl.style.color = '#D4AF37';
+            }
+        });
+        
+        // Update fare breakdown if vehicle selected
+        if (BookingState.selectedVehicle) {
+            calculateFare();
+        }
+    }
+
+    function calculateVehiclePrice(vehicle, distance) {
+        const dist = distance || BookingState.distance || 5; // Default 5km if no distance
+        const basePrice = vehicle.basePrice;
+        const distancePrice = Math.round(vehicle.perKm * dist);
+        return basePrice + distancePrice;
+    }
+
+    function selectVehicle(id) {
+        const vehicle = vehicles.find(v => v.id === id);
+        if (!vehicle) return;
+        
+        BookingState.selectedVehicle = vehicle;
+        
+        // Update UI selection
+        document.querySelectorAll('.vehicle-card').forEach(c => c.classList.remove('selected'));
+        const selectedCard = document.getElementById(`vehicle-${id}`);
+        if (selectedCard) selectedCard.classList.add('selected');
+        
+        // Show eco panel
+        const ecoPanel = document.getElementById('eco-panel');
+        if (ecoPanel) {
+            if (vehicle.eco) {
+                const ecoSaved = document.getElementById('eco-saved');
+                if (ecoSaved) ecoSaved.textContent = vehicle.co2;
+                ecoPanel.style.display = 'flex';
+            } else {
+                ecoPanel.style.display = 'none';
+            }
+        }
+        
+        // Calculate and display fare
+        calculateFare();
+        
+        // Enable book button
+        const bookBtn = document.getElementById('book-btn');
+        if (bookBtn) bookBtn.disabled = false;
+    }
+
+    function calculateFare() {
+        if (!BookingState.selectedVehicle) return;
+        
+        const vehicle = BookingState.selectedVehicle;
+        const distance = BookingState.distance || 5; // Use calculated distance or default
+        
+        // Calculate base components
+        const baseFare = vehicle.basePrice;
+        const distanceFare = Math.round(vehicle.perKm * distance);
+        let subtotal = baseFare + distanceFare;
+        
+        // Apply preference multipliers
+        let preferenceCost = 0;
+        if (BookingState.preferences.femaleDriver) {
+            preferenceCost += Math.round(subtotal * 0.1); // 10% extra
+        }
+        if (BookingState.preferences.petFriendly) {
+            preferenceCost += 50;
+        }
+        if (BookingState.preferences.wheelchair) {
+            preferenceCost += 30;
+        }
+        if (BookingState.preferences.silent) {
+            preferenceCost += 20;
+        }
+        
+        subtotal += preferenceCost;
+        
+        // Calculate taxes (18%)
+        const taxes = Math.round(subtotal * 0.18);
+        let total = subtotal + taxes;
+        
+        // Store for later
+        BookingState.baseFare = total;
+        
+        // Apply promo if any
+        if (BookingState.promoApplied) {
+            BookingState.discount = Math.round(total * 0.5);
+            total -= BookingState.discount;
+        }
+        
+        // Update UI
+        updateFareDisplay(baseFare, distanceFare, taxes, preferenceCost, total);
+        
+        return total;
+    }
+
+    function updateFareDisplay(base, distance, taxes, preferences, total) {
+        const baseEl = document.getElementById('fare-base');
+        const distEl = document.getElementById('fare-distance');
+        const taxEl = document.getElementById('fare-taxes');
+        const discountRow = document.getElementById('fare-discount-row');
+        const discountEl = document.getElementById('fare-discount');
+        const totalEl = document.getElementById('fare-total');
+        
+        if (baseEl) baseEl.textContent = `₹${base}`;
+        if (distEl) distEl.textContent = `₹${distance}`;
+        if (taxEl) taxEl.textContent = `₹${taxes}`;
+        
+        // Show preference cost if any
+        if (preferences > 0 && distEl) {
+            distEl.textContent = `₹${distance} + ₹${preferences} (prefs)`;
+        }
+        
+        if (BookingState.promoApplied && discountRow && discountEl) {
+            discountRow.style.display = 'flex';
+            discountEl.textContent = `-₹${BookingState.discount}`;
+        } else if (discountRow) {
+            discountRow.style.display = 'none';
+        }
+        
+        if (totalEl) totalEl.textContent = `₹${total}`;
+    }
+
+    function togglePreference(element, pref) {
+        element.classList.toggle('active');
+        BookingState.preferences[pref] = element.classList.contains('active');
+        calculateFare();
+    }
+
+    function applyPromo() {
+        const input = document.getElementById('promo-input');
+        const message = document.getElementById('promo-message');
+        if (!input || !message) return;
+        
+        const code = input.value.toUpperCase().trim();
+        
+        if (code === 'FIRST50' && !BookingState.promoApplied) {
+            BookingState.promoApplied = true;
+            message.textContent = '✓ 50% discount applied!';
+            message.className = 'promo-message success';
+            calculateFare();
+            showToast('Promo code applied!', 'success');
+        } else if (BookingState.promoApplied) {
+            message.textContent = 'Promo already applied';
+            message.className = 'promo-message error';
+        } else if (code === '') {
+            message.textContent = '';
+        } else {
+            message.textContent = 'Invalid promo code';
+            message.className = 'promo-message error';
+        }
+    }
+
+    function initiateBooking() {
+        if (!BookingState.selectedVehicle) {
+            showToast('Please select a vehicle', 'error');
+            return;
+        }
+        if (!BookingState.pickup || !BookingState.dropoff) {
+            showToast('Please enter both locations', 'error');
+            return;
+        }
+        if (BookingState.distance <= 0) {
+            showToast('Please calculate route first', 'error');
+            return;
+        }
+        
+        // Update confirmation modal
+        const confirmVehicle = document.getElementById('confirm-vehicle');
+        const confirmPickup = document.getElementById('confirm-pickup');
+        const confirmDropoff = document.getElementById('confirm-dropoff');
+        const confirmFare = document.getElementById('confirm-fare');
+        
+        if (confirmVehicle) confirmVehicle.textContent = BookingState.selectedVehicle.name;
+        if (confirmPickup) confirmPickup.textContent = BookingState.pickup;
+        if (confirmDropoff) confirmDropoff.textContent = BookingState.dropoff;
+        if (confirmFare) confirmFare.textContent = document.getElementById('fare-total')?.textContent || '--';
+        
+        // Show modal
+        const modal = document.getElementById('booking-modal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('booking-modal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    function confirmBooking() {
+        closeModal();
+        
+        const btn = document.getElementById('book-btn');
+        if (btn) btn.classList.add('loading');
+        
+        setTimeout(() => {
+            const ride = RideManager.createRide({
+                pickup: BookingState.pickup,
+                dropoff: BookingState.dropoff,
+                vehicle: BookingState.selectedVehicle,
+                fare: parseInt(document.getElementById('fare-total')?.textContent?.replace('₹', '') || 0),
+                distance: BookingState.distance,
+                duration: BookingState.duration,
+                preferences: { ...BookingState.preferences },
+                promoApplied: BookingState.promoApplied
+            });
+            
+            if (btn) btn.classList.remove('loading');
+            showToast(`Ride booked! OTP: ${ride.otp}`, 'success');
+            
+            setTimeout(() => window.location.href = 'trips.html', 1500);
+        }, 1500);
+    }
+
+    function triggerSOS() {
+        if (confirm('🚨 EMERGENCY: Send SOS alert with your current location?')) {
+            const location = BookingState.pickup || 'Current Location';
+            console.log('SOS Triggered:', { location, time: new Date() });
+            showToast('🚨 SOS sent to emergency contacts!', 'error');
+        }
+    }
+
+    // Close modal on outside click
+    document.getElementById('booking-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeModal();
+    });
+</script>
+</body>
+</html>

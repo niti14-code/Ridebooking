@@ -27,7 +27,9 @@
                 <span>LuxeRide</span>
             </a>
             
-            <div class="nav-right">
+                        <div class="nav-right">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="booking.html" class="nav-link active">Book Ride</a>
                 <a href="trips.html" class="nav-link">My Trips</a>
                 <div class="user-menu" id="user-menu">
                     <div class="user-avatar" id="user-avatar">U</div>
@@ -124,13 +126,42 @@
                     </div>
                 </div>
                 
-                <button class="route-btn" id="route-btn" onclick="MapManager.calculateRoute()" disabled>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-                    </svg>
-                    Show Route
+                <button class="route-btn" id="route-btn">
+                    <span class="route-text">Show Route</span>
+                    <div class="route-spinner hidden"></div>
                 </button>
             </div>
+            <!-- Schedule Panel -->
+<div class="schedule-panel" id="schedule-panel">
+  <div class="panel-title">Schedule Ride</div>
+  
+  <div class="schedule-toggle">
+    <label class="toggle-option">
+      <input type="radio" name="ride-type" value="now" checked onchange="toggleSchedule(false)">
+      <span>Book Now</span>
+    </label>
+    <label class="toggle-option">
+      <input type="radio" name="ride-type" value="later" onchange="toggleSchedule(true)">
+      <span>Schedule for Later</span>
+    </label>
+  </div>
+  
+  <div class="schedule-datetime" id="schedule-datetime" style="display: none;">
+    <div class="datetime-inputs">
+      <div class="input-group">
+        <label>Date</label>
+        <input type="date" id="schedule-date" min="">
+      </div>
+      <div class="input-group">
+        <label>Time</label>
+        <input type="time" id="schedule-time" min="">
+      </div>
+    </div>
+    <div class="schedule-info">
+      <span>⚡ Driver will be assigned 15 mins before pickup</span>
+    </div>
+  </div>
+</div>
 
             <!-- Vehicle Selection -->
             <div class="vehicles-panel" id="vehicles-panel">
@@ -297,12 +328,12 @@
             </div>
         </div>
     </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+/*<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/rideManager.js"></script>
 <script src="js/map.js"></script>
-<script src="js/ui.js"></script>
+<script src="js/ui.js"></script>*/
 <script>
     // Booking State
     const BookingState = {
@@ -594,30 +625,51 @@
         if (modal) modal.classList.remove('active');
     }
 
-    function confirmBooking() {
+    async function confirmBooking() {
+    if (!Auth.requireAuth()) return;
+
+    const btn = document.querySelector(".booking-confirm .btn-primary");
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px;"></div> Booking...';
+
+    try {
+        const rideData = {
+            pickup: BookingState.pickup,
+            dropoff: BookingState.dropoff,
+            vehicle: BookingState.selectedVehicle,
+            distance: BookingState.distance,
+            duration: BookingState.duration,
+            fare: BookingState.baseFare,
+            preferences: BookingState.preferences,
+            scheduledFor: BookingState.scheduledFor || null
+        };
+
+        const ride = await RideManager.createRide(rideData);
+        
+        // SUCCESS - Show clear confirmation
         closeModal();
+        showToast("🎉 Ride booked successfully! OTP: " + ride.otp, "success");
         
-        const btn = document.getElementById('book-btn');
-        if (btn) btn.classList.add('loading');
+        // Reset button
+        btn.disabled = false;
+        btn.textContent = originalText;
         
+        // Store success flag for trips page
+        localStorage.setItem('justBooked', 'true');
+        
+        // Redirect after user sees the message
         setTimeout(() => {
-            const ride = RideManager.createRide({
-                pickup: BookingState.pickup,
-                dropoff: BookingState.dropoff,
-                vehicle: BookingState.selectedVehicle,
-                fare: parseInt(document.getElementById('fare-total')?.textContent?.replace('₹', '') || 0),
-                distance: BookingState.distance,
-                duration: BookingState.duration,
-                preferences: { ...BookingState.preferences },
-                promoApplied: BookingState.promoApplied
-            });
-            
-            if (btn) btn.classList.remove('loading');
-            showToast(`Ride booked! OTP: ${ride.otp}`, 'success');
-            
-            setTimeout(() => window.location.href = 'trips.html', 1500);
-        }, 1500);
+            window.location.href = "trips.html?new=true";
+        }, 2500);
+
+    } catch (error) {
+        showToast("Booking failed: " + error.message, "error");
+        btn.disabled = false;
+        btn.textContent = originalText;
     }
+}
+
 
     function triggerSOS() {
         if (confirm('🚨 EMERGENCY: Send SOS alert with your current location?')) {
@@ -631,6 +683,143 @@
     document.getElementById('booking-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeModal();
     });
+
+    // Schedule state
+let isScheduled = false;
+
+// Initialize date inputs
+function initScheduleInputs() {
+  const dateInput = document.getElementById('schedule-date');
+  const timeInput = document.getElementById('schedule-time');
+  
+  // Set min date to today
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.min = today;
+  dateInput.value = today;
+  
+  // Set min time to 30 mins from now
+  const now = new Date();
+  now.setMinutes(now.getMinutes() + 30);
+  const timeStr = now.toTimeString().slice(0, 5);
+  timeInput.min = timeStr;
+  timeInput.value = timeStr;
+}
+
+function toggleSchedule(schedule) {
+  isScheduled = schedule;
+  const datetimePanel = document.getElementById('schedule-datetime');
+  datetimePanel.style.display = schedule ? 'block' : 'none';
+  
+  if (schedule) {
+    initScheduleInputs();
+    BookingState.scheduledFor = getScheduledDateTime();
+  } else {
+    BookingState.scheduledFor = null;
+  }
+  
+  updateFare(); // Recalculate if scheduled rides have different pricing
+}
+
+function getScheduledDateTime() {
+  const date = document.getElementById('schedule-date').value;
+  const time = document.getElementById('schedule-time').value;
+  
+  if (!date || !time) return null;
+  
+  const scheduledDate = new Date(`${date}T${time}`);
+  return scheduledDate.toISOString();
+}
+
+// Update confirmBooking to include scheduling
+async function confirmBooking() {
+  if (!Auth.requireAuth()) return;
+
+  const btn = document.querySelector(".booking-confirm .btn-primary");
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> ' + (isScheduled ? 'Scheduling...' : 'Booking...');
+
+  try {
+    // Validate scheduled time if applicable
+    if (isScheduled) {
+      const scheduledTime = new Date(BookingState.scheduledFor);
+      const minTime = new Date(Date.now() + 30 * 60000);
+      
+      if (scheduledTime < minTime) {
+        throw new Error('Please select a time at least 30 minutes from now');
+      }
+    }
+
+    const rideData = {
+      pickup: BookingState.pickup,
+      dropoff: BookingState.dropoff,
+      vehicle: BookingState.selectedVehicle,
+      distance: BookingState.distance,
+      duration: BookingState.duration,
+      fare: {
+        baseFare: BookingState.baseFare,
+        total: parseInt(document.getElementById('fare-total')?.textContent?.replace('₹', '') || 0)
+      },
+      preferences: BookingState.preferences,
+      scheduledFor: isScheduled ? BookingState.scheduledFor : null
+    };
+
+    const ride = await RideManager.createRide(rideData);
+    
+    closeModal();
+    
+    // Different success messages for scheduled vs immediate
+    if (isScheduled) {
+      showToast(`🕐 Ride scheduled for ${ride.formattedScheduledTime}!`, 'success');
+      localStorage.setItem('justScheduled', 'true');
+    } else {
+      showToast("🎉 Ride booked successfully! OTP: " + ride.otp, "success");
+      localStorage.setItem('justBooked', 'true');
+    }
+    
+    setTimeout(() => {
+      window.location.href = "trips.html" + (isScheduled ? "?filter=scheduled" : "?new=true");
+    }, 2500);
+
+  } catch (error) {
+    showToast(error.message || "Booking failed. Try again.", "error");
+    btn.disabled = false;
+    btn.textContent = "Confirm Booking";
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  Auth.checkAuth();
+  MapManager.init();
+  renderVehicles();
+  setupInputs();
+  initScheduleInputs(); // NEW
+  
+  // Check for URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const pickup = urlParams.get('pickup');
+  const dropoff = urlParams.get('dropoff');
+  
+  if (pickup) {
+    document.getElementById('pickup-input').value = pickup;
+    BookingState.pickup = pickup;
+  }
+  if (dropoff) {
+    document.getElementById('dropoff-input').value = dropoff;
+    BookingState.dropoff = dropoff;
+  }
+  
+  if (pickup && dropoff) {
+    setTimeout(() => MapManager.calculateRoute(), 500);
+  }
+});
 </script>
+<!-- Load api.js FIRST, before other scripts -->
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/rideManager.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

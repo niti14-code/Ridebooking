@@ -178,6 +178,14 @@ const MapManager = {
         
         const pickupAddress = pickupInput ? pickupInput.value : '';
         const dropoffAddress = dropoffInput ? dropoffInput.value : '';
+        const routeBtn = document.getElementById("route-btn");
+        const spinner = document.querySelector(".route-spinner");
+        const text = document.querySelector(".route-text");
+
+        routeBtn.disabled = true;
+        spinner.classList.remove("hidden");
+        text.textContent = "Calculating...";
+
         
         if (!pickupAddress || !dropoffAddress) {
             showToast('Please enter both pickup and dropoff locations', 'error');
@@ -200,6 +208,10 @@ const MapManager = {
             console.error('Routing error:', error);
             showToast('Error calculating route. Please try again.', 'error');
         }
+        routeBtn.disabled = false;
+        spinner.classList.add("hidden");
+        text.textContent = "Show Route";
+
     },
 
     // Geocode address using Nominatim (OpenStreetMap)

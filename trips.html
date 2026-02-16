@@ -242,6 +242,72 @@
                 justify-content: center;
             }
         }
+        .rating-modal {
+  max-width: 400px;
+  text-align: center;
+}
+
+.stars-container {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 1rem 0;
+}
+
+.star {
+  font-size: 2rem;
+  cursor: pointer;
+  color: #ccc;
+  transition: 0.2s ease;
+}
+
+.star.active {
+  color: gold;
+  transform: scale(1.2);
+}
+
+textarea {
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--dark-card);
+  color: white;
+}
+        .status-searching { background: rgba(33, 150, 243, 0.1); color: #2196F3; }
+        .status-confirmed { background: rgba(0, 200, 83, 0.1); color: var(--success-green); }
+        
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .trip-card.scheduled-ride {
+    border-left: 4px solid var(--info-blue);
+    background: linear-gradient(90deg, rgba(33, 150, 243, 0.05) 0%, transparent 100%);
+}
+
+.status-scheduled {
+    background: rgba(33, 150, 243, 0.1);
+    color: var(--info-blue);
+    animation: pulse-blue 2s infinite;
+}
+
+@keyframes pulse-blue {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
     </style>
 </head>
 <body>
@@ -259,12 +325,15 @@
                 <span>LuxeRide</span>
             </a>
             
-            <div class="nav-right">
-                <a href="booking.html" class="btn-primary">Book Ride</a>
+                        <div class="nav-right">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="booking.html" class="nav-link">Book Ride</a>
+                <a href="trips.html" class="nav-link active">My Trips</a>
                 <div class="user-menu" id="user-menu">
                     <div class="user-avatar" id="user-avatar">U</div>
                     <div class="dropdown">
                         <span id="user-name">User</span>
+                        <a href="trips.html">My Trips</a>
                         <a href="#" onclick="Auth.logout()">Logout</a>
                     </div>
                 </div>
@@ -281,11 +350,12 @@
                 </div>
                 
                 <div class="trip-filters">
-                    <button class="filter-btn active" onclick="filterTrips('all')">All</button>
-                    <button class="filter-btn" onclick="filterTrips('ongoing')">Ongoing</button>
-                    <button class="filter-btn" onclick="filterTrips('completed')">Completed</button>
-                    <button class="filter-btn" onclick="filterTrips('cancelled')">Cancelled</button>
-                </div>
+    <button class="filter-btn active" onclick="filterTrips('all')">All</button>
+    <button class="filter-btn" onclick="filterTrips('upcoming')">Upcoming</button>
+    <button class="filter-btn" onclick="filterTrips('scheduled')">Scheduled</button>
+    <button class="filter-btn" onclick="filterTrips('completed')">Completed</button>
+    <button class="filter-btn" onclick="filterTrips('cancelled')">Cancelled</button>
+</div>
             </div>
         </div>
 
@@ -299,25 +369,60 @@
         <span>SOS</span>
     </button>
 
-    <script src="js/utils.js"></script>
+        <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/rideManager.js"></script>
     <script src="js/ui.js"></script>
     <script>
         let currentFilter = 'all';
+        let allRides = [];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            Auth.checkAuth();
-            loadTrips();
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth first
+            if (!Auth.checkAuth()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Load trips
+            await loadTrips();
+            
+            // Check if just booked
+            if (localStorage.getItem('justBooked')) {
+                localStorage.removeItem('justBooked');
+                showToast('Your ride has been booked!', 'success');
+            }
         });
 
-        function loadTrips() {
+        async function loadTrips() {
             const container = document.getElementById('trips-container');
-            const trips = RideManager.getRides();
+            
+            try {
+                container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-secondary);">Loading trips...</div>';
+                
+                allRides = await RideManager.getRides();
+                renderTrips();
+                
+            } catch (error) {
+                console.error('Error loading trips:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>Error loading trips</h3>
+                        <p>Please try refreshing the page</p>
+                        <button onclick="loadTrips()" class="btn-primary">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderTrips() {
+            const container = document.getElementById('trips-container');
             
             const filtered = currentFilter === 'all' 
-                ? trips 
-                : trips.filter(t => t.status === currentFilter);
+                ? allRides 
+                : allRides.filter(t => t.status === currentFilter);
             
             if (filtered.length === 0) {
                 container.innerHTML = `
@@ -338,10 +443,12 @@
             const statusIcons = {
                 ongoing: '→',
                 completed: '✓',
-                cancelled: '✕'
+                cancelled: '✕',
+                searching: '🔍',
+                confirmed: '✓'
             };
             
-            const date = new Date(trip.createdAt);
+            const date = new Date(trip.createdAt || Date.now());
             const dateStr = date.toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric', 
@@ -349,45 +456,48 @@
                 minute: '2-digit' 
             });
             
+            const vehicleIcon = trip.vehicle?.icon || trip.vehicleType || '🚗';
+            const vehicleName = trip.vehicle?.name || trip.vehicleType || 'Vehicle';
+            
             return `
                 <div class="trip-card">
-                    <div class="trip-status status-${trip.status}">
-                        ${statusIcons[trip.status]}
+                    <div class="trip-status status-${trip.status || 'ongoing'}">
+                        ${statusIcons[trip.status] || '→'}
                     </div>
                     
                     <div class="trip-info">
                         <h3>
-                            ${trip.vehicle.icon} ${trip.vehicle.name}
-                            ${trip.preferences.femaleDriver ? '👩' : ''}
-                            ${trip.preferences.petFriendly ? '🐾' : ''}
+                            ${vehicleIcon} ${vehicleName}
+                            ${trip.preferences?.femaleDriver ? '👩' : ''}
+                            ${trip.preferences?.petFriendly ? '🐾' : ''}
                         </h3>
                         <div class="trip-route">
-                            <span>${trip.pickup}</span>
+                            <span>${trip.pickup?.address || trip.pickup || 'Unknown'}</span>
                             <span>→</span>
-                            <span>${trip.dropoff}</span>
+                            <span>${trip.dropoff?.address || trip.dropoff || 'Unknown'}</span>
                         </div>
                         <div class="trip-meta">
                             <span>📅 ${dateStr}</span>
-                            <span>🎫 OTP: <strong style="color: var(--primary-gold)">${trip.otp}</strong></span>
-                            ${trip.distance ? `<span>📏 ${trip.distance.toFixed(1)} km</span>` : ''}
+                            <span>🎫 OTP: <strong style="color: var(--primary-gold)">${trip.otp || '----'}</strong></span>
+                            ${trip.distance ? `<span>📏 ${typeof trip.distance === 'number' ? trip.distance.toFixed(1) : trip.distance} km</span>` : ''}
                         </div>
                     </div>
                     
                     <div class="trip-price">
-                        <div class="price-amount">₹${trip.fare}</div>
-                        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary);">${trip.status}</div>
+                        <div class="price-amount">₹${trip.fare?.total || trip.fare || 0}</div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary);">${trip.status || 'ongoing'}</div>
                     </div>
                     
                     <div class="trip-actions">
-                        ${trip.status === 'ongoing' ? `
-                            <button class="icon-btn danger" onclick="cancelTrip(${trip.id})" title="Cancel Ride">
+                        ${trip.status === 'ongoing' || trip.status === 'searching' || trip.status === 'confirmed' ? `
+                            <button class="icon-btn danger" onclick="cancelTrip('${trip._id || trip.id}')" title="Cancel Ride">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
                                     <line x1="6" y1="6" x2="18" y2="18"></line>
                                 </svg>
                             </button>
                         ` : ''}
-                        <button class="icon-btn" onclick="deleteTrip(${trip.id})" title="Delete">
+                        <button class="icon-btn" onclick="deleteTrip('${trip._id || trip.id}')" title="Delete">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -402,30 +512,218 @@
             currentFilter = filter;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            loadTrips();
+            renderTrips();
         }
 
-        function cancelTrip(id) {
-            if (confirm('Are you sure you want to cancel this ride?')) {
-                RideManager.cancelRide(id);
+        async function cancelTrip(id) {
+            if (!confirm('Are you sure you want to cancel this ride?')) return;
+            
+            try {
+                await RideManager.cancelRide(id);
                 showToast('Ride cancelled successfully', 'success');
-                loadTrips();
+                await loadTrips(); // Refresh the list
+            } catch (error) {
+                showToast('Failed to cancel ride', 'error');
             }
         }
 
-        function deleteTrip(id) {
-            if (confirm('Delete this trip from history?')) {
-                RideManager.deleteRide(id);
+        async function deleteTrip(id) {
+            if (!confirm('Delete this trip from history?')) return;
+            
+            try {
+                await RideManager.deleteRide(id);
                 showToast('Trip deleted', 'success');
-                loadTrips();
+                await loadTrips(); // Refresh the list
+            } catch (error) {
+                showToast('Failed to delete trip', 'error');
             }
         }
 
         function triggerSOS() {
-            if (confirm('🚨 EMERGENCY: Send SOS alert?')) {
+            if (confirm('🚨 EMERGENCY: Send SOS alert with your current location?')) {
                 showToast('🚨 SOS sent to emergency contacts!', 'error');
             }
         }
+
+        // Rating modal functions
+        let selectedRating = 0;
+        let currentRideId = null;
+
+        function openRatingModal(rideId) {
+            currentRideId = rideId;
+            selectedRating = 0;
+            updateStars(0);
+            document.getElementById("rating-modal").style.display = "flex";
+        }
+
+        function updateStars(rating) {
+            const stars = document.querySelectorAll(".star");
+            stars.forEach((star, index) => {
+                star.classList.toggle("active", index < rating);
+            });
+        }
+
+        function closeRatingModal() {
+            document.getElementById("rating-modal").style.display = "none";
+        }
+
+        function submitRating() {
+            if (selectedRating === 0) {
+                showToast("Please select a rating", "error");
+                return;
+            }
+            const feedback = document.getElementById("rating-feedback").value;
+            localStorage.setItem(`rating_${currentRideId}`, JSON.stringify({
+                rating: selectedRating,
+                feedback,
+                date: new Date().toISOString()
+            }));
+            showToast("Thank you for your feedback!", "success");
+            closeRatingModal();
+        }
+
+        function createTripCard(trip) {
+    const statusIcons = {
+        scheduled: '🕐',
+        searching: '🔍',
+        confirmed: '✓',
+        ongoing: '→',
+        completed: '✓',
+        cancelled: '✕'
+    };
+    
+    const date = new Date(trip.scheduledFor || trip.createdAt);
+    const isScheduled = trip.isScheduled && trip.status === 'scheduled';
+    const isUpcoming = new Date(trip.scheduledFor) > new Date();
+    
+    const dateStr = date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    
+    const vehicleIcon = trip.vehicle?.icon || trip.vehicleType || '🚗';
+    const vehicleName = trip.vehicle?.name || trip.vehicleType || 'Vehicle';
+    
+    return `
+        <div class="trip-card ${isScheduled ? 'scheduled-ride' : ''}">
+            <div class="trip-status status-${trip.status || 'ongoing'}">
+                ${statusIcons[trip.status] || '→'}
+            </div>
+            
+            <div class="trip-info">
+                <h3>
+                    ${vehicleIcon} ${vehicleName}
+                    ${isScheduled ? '<span class="schedule-badge">🕐 Scheduled</span>' : ''}
+                    ${trip.preferences?.femaleDriver ? '👩' : ''}
+                    ${trip.preferences?.petFriendly ? '🐾' : ''}
+                </h3>
+                <div class="trip-route">
+                    <span>${trip.pickup?.address || trip.pickup || 'Unknown'}</span>
+                    <span>→</span>
+                    <span>${trip.dropoff?.address || trip.dropoff || 'Unknown'}</span>
+                </div>
+                <div class="trip-meta">
+                    <span>📅 ${dateStr}</span>
+                    ${trip.otp ? `<span>🎫 OTP: <strong style="color: var(--primary-gold)">${trip.otp}</strong></span>` : ''}
+                    ${trip.distance ? `<span>📏 ${trip.distance} km</span>` : ''}
+                    ${isScheduled ? `<span>⏰ Driver assigned at ${getAssignmentTime(trip.scheduledFor)}</span>` : ''}
+                </div>
+            </div>
+            
+            <div class="trip-price">
+                <div class="price-amount">₹${trip.fare?.total || trip.fare || 0}</div>
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary);">${trip.status}</div>
+            </div>
+            
+            <div class="trip-actions">
+                ${isScheduled ? `
+                    <button class="icon-btn" onclick="rescheduleTrip('${trip._id || trip.id}')" title="Reschedule">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </button>
+                ` : ''}
+                
+                ${trip.status === 'ongoing' || trip.status === 'scheduled' || trip.status === 'confirmed' ? `
+                    <button class="icon-btn danger" onclick="cancelTrip('${trip._id || trip.id}')" title="Cancel Ride">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                ` : ''}
+                
+                <button class="icon-btn" onclick="deleteTrip('${trip._id || trip.id}')" title="Delete">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function getAssignmentTime(scheduledFor) {
+    const date = new Date(scheduledFor);
+    date.setMinutes(date.getMinutes() - 15);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Add reschedule function
+async function rescheduleTrip(id) {
+    const newDate = prompt('Enter new date (YYYY-MM-DD):');
+    if (!newDate) return;
+    
+    const newTime = prompt('Enter new time (HH:MM):');
+    if (!newTime) return;
+    
+    const newScheduledTime = new Date(`${newDate}T${newTime}`).toISOString();
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/rides/${id}/reschedule`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${api.getToken()}`
+            },
+            body: JSON.stringify({ newScheduledTime })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Ride rescheduled successfully!', 'success');
+            await loadTrips();
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
     </script>
+<!-- Rating Modal -->
+<div class="modal-overlay" id="rating-modal" style="display:none;">
+  <div class="modal rating-modal">
+    <h3>Rate Your Ride</h3>
+    <p>How was your experience?</p>
+
+    <div class="stars-container" id="stars-container"></div>
+
+    <textarea id="rating-feedback"
+      placeholder="Optional feedback..."
+      rows="3"></textarea>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeRatingModal()">Cancel</button>
+      <button class="btn-primary" onclick="submitRating()">Submit Rating</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
